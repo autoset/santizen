@@ -22,7 +22,7 @@ class SantizenMain {
 		$this->actionName = array_shift($this->commandArgs);
 
 		try {
-			$action = $this->getActionInstance($actionName);
+			$action = $this->getActionInstance();
 		} catch (\ReflectionException $re) {
 			echo "Invalid santizen action.";
 			exit;
