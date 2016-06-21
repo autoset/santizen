@@ -17,3 +17,4 @@ $ santizen config lang="php5" framework="santorini"
 ```
 
 - fetch
+- generate
