@@ -20,8 +20,14 @@ class SantizenMain {
 		}
 
 		$this->actionName = array_shift($this->commandArgs);
-		
-		$action = $this->getActionInstance($actionName);
+
+		try {
+			$action = $this->getActionInstance($actionName);
+		} catch (\ReflectionException $re) {
+			echo "Invalid santizen action.";
+			exit;
+		}
+
 		$action->setCommandArguments($this->commandArgs);
 		$action->run();
 	}

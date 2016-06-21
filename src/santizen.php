@@ -5,7 +5,7 @@ define('SANTIZEN_CLASS_ROOT',	SANTIZEN_ROOT.'/classes');
 
 set_time_limit(0);
 ini_set("memory_limit", "1024M");
-ini_set("safe_mode", "0");
+date_default_timezone_set('Asia/Seoul');
 
 set_exception_handler('santizen_exception_handler');
 spl_autoload_register('santizen_autoload');
