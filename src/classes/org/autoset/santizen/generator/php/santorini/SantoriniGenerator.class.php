@@ -49,7 +49,7 @@ class SantoriniGenerator {
 
 	private function makeVoClassFile() {
 
-		$className = ucfirst($this->tableName).'Entity';
+		$className = ucfirst(StringHelper::underscore2camel($this->tableName)).'Entity';
 		
 		$phpFile = new PhpClassFileGenerator();
 		
@@ -87,9 +87,9 @@ class SantoriniGenerator {
 
 	private function makeDaoClassFile() {
 
-		$voClassName = ucfirst($this->tableName).'Entity';
+		$voClassName = ucfirst(StringHelper::underscore2camel($this->tableName)).'Entity';
 
-		$className = ucfirst($this->tableName).'Dao';
+		$className = ucfirst(StringHelper::underscore2camel($this->tableName)).'Dao';
 		$tableAlias = StringHelper::underscore2attr($this->tableName);
 		
 		$phpFile = new PhpClassFileGenerator();
@@ -194,12 +194,12 @@ class SantoriniGenerator {
 	}
 
 	private function getOutputDir($dir) {
-		$path = $this->outputDir.DIRECTORY_SEPARATOR.$this->tableName.DIRECTORY_SEPARATOR.$dir;
+		$path = $this->outputDir.DIRECTORY_SEPARATOR.StringHelper::underscore2camel($this->tableName).DIRECTORY_SEPARATOR.$dir;
 		return $path;
 	}
 
 	private function getNamespace($dir) {
-		$path = $this->namespace."\\".$this->tableName."\\".$dir;
+		$path = $this->namespace."\\".StringHelper::underscore2camel($this->tableName)."\\".$dir;
 		return $path;
 	}
 
