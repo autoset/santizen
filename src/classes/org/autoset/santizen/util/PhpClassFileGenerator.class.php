@@ -7,6 +7,8 @@ use org\autoset\santizen\util\StringHelper;
 class PhpClassFileGenerator {
 
 	private $namespace = null;
+	private $useClasses = array();
+
 	private $className = null;
 	private $classDescription = null;
 	private $extendsClassName = null;
@@ -33,6 +35,10 @@ class PhpClassFileGenerator {
 
 	public function setImplementsInterfaceName($implementsInterfaceName) {
 		$this->implementsInterfaceName = $implementsInterfaceName;
+	}
+
+	public function addUseClass($classPath) {
+		$this->useClasses[] = $classPath;
 	}
 
 	public function addProperty($propertyName, $accessModifier = 'public', $isStatic = false, $returnType = '', $value = null) {
@@ -92,6 +98,13 @@ class PhpClassFileGenerator {
 		if ($this->namespace != '') {
 			$contents[] = '';
 			$contents[] = 'namespace '.$this->namespace.';';
+		}
+
+		if (sizeof($this->useClasses) > 0) {
+			$contents[] = '';
+			foreach ($this->useClasses as $classPath) {
+				$contents[] = 'use '.$classPath.';';
+			}
 		}
 
 		if ($this->classDescription != '') {
@@ -164,7 +177,11 @@ class PhpClassFileGenerator {
 
 				if (sizeof($method['arguments']) > 0) {
 					foreach ($method['arguments'] as $argument) {
-						$contents[] = "\t".' * @param '.$argument;
+						if (($pos = strpos($argument, ' ')) !== false) {
+							$contents[] = "\t".' * @param '.substr($argument, $pos + 1);
+						} else {
+							$contents[] = "\t".' * @param '.$argument;
+						}
 					}
 				}
 

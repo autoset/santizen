@@ -23,6 +23,8 @@ class SantoriniGenerator {
 		$this->makeDirectory();
 
 		$this->makeVoClassFile();
+
+		$this->makeDaoClassFile();
 	}
 
 	private function makeDirectory() {
@@ -81,6 +83,68 @@ class SantoriniGenerator {
 		$classFilePath = $this->getOutputDir('vo/'.$className.'.class.php');
 		$phpFile->saveAs($classFilePath);
 
+	}
+
+	private function makeDaoClassFile() {
+
+		$voClassName = ucfirst($this->tableName).'Entity';
+
+		$className = ucfirst($this->tableName).'Dao';
+		$tableAlias = StringHelper::underscore2attr($this->tableName);
+		
+		$phpFile = new PhpClassFileGenerator();
+	
+		$phpFile->setNamespace($this->getNamespace('dao'));
+		$phpFile->addUseClass($this->getNamespace("vo\\".$voClassName));
+		$phpFile->setClassName($className);
+		$phpFile->setClassDescription($this->tableName.' 테이블에 대한 DAO');
+		$phpFile->setExtendsClassName("CommonDAO");
+		$phpFile->setImplementsInterfaceName("");
+
+		// 목록 조회용
+		$methodName = StringHelper::underscore2camel($this->tableName);
+		$methodIdx = $phpFile->addMethod('selectList'.ucfirst($methodName), 'public', false, 'array<'.$voClassName.'>');
+		$phpFile->setMethodDescription($methodIdx, $this->tableName.' 테이블 목록 조회');
+		$phpFile->setMethodArguments($methodIdx, array($voClassName." \$paramVo"));
+
+		$codes = array(	'$sql =<<<SQL',
+						"\t".'SELECT /* '.$this->tableName.' 테이블 목록 조회'.' */');
+
+		$hasDeleteYnColumn = false;
+		$pkColumns = array();
+		$columns = array();
+		foreach ($this->schemes as $scheme) {
+			$columns[] = $tableAlias.'.'.$scheme['name'];
+
+			if ($scheme['isPk']) {
+				$pkColumns[] = $tableAlias.'.'.$scheme['name'].' DESC';
+			}
+
+			if ($scheme['name'] == 'delete_yn') {
+				$hasDeleteYnColumn = true;
+			}
+		}
+
+		$codes[] = "\t\t".implode(PHP_EOL . "\t\t".', ' , $columns);
+
+		$codes[] = "\t".'FROM '.$this->tableName.' AS '.$tableAlias;
+
+		if ($hasDeleteYnColumn) {
+			$codes[] = "\t".'WHERE '.$tableAlias.'.delete_yn = \'N\'';
+		}
+
+		$codes[] = "\t".'ORDER BY '.implode(', ', $pkColumns);
+
+		$codes[] = "\1".'SQL;';
+		$codes[] = '';
+		$codes[] = 'return $this->selectList($sql, $paramVo, new '.$voClassName.'());';
+
+
+		$phpFile->setMethodCode($methodIdx, implode(PHP_EOL, $codes));
+
+
+		$classFilePath = $this->getOutputDir('dao/'.$className.'.class.php');
+		$phpFile->saveAs($classFilePath);
 	}
 
 	private function getOutputDir($dir) {
