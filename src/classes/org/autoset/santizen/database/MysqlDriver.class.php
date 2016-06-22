@@ -337,9 +337,14 @@ class MysqlDriver
 	{
 		$result = $this->_execute('SELECT * FROM `'.$tableName.'` LIMIT 1');
 		$fields = $result->fetch_fields();
+
 		$result = array();
 		foreach ($fields as $field) {
-			$result[] = array("name" => $field->name, "type" => $this->getDataType($field->type));
+			$result[] = array(
+								"name" => $field->name,
+								"type" => $this->getDataType($field->type),
+								"isPk" => ($field->flags & 2) == 2
+							);
 		}
 		return $result;
 	}
