@@ -1,0 +1,189 @@
+<?php
+
+namespace org\autoset\santizen\util;
+
+use org\autoset\santizen\util\StringHelper;
+
+class PhpClassFileGenerator {
+
+	private $namespace = null;
+	private $className = null;
+	private $classDescription = null;
+	private $extendsClassName = null;
+	private $implementsInterfaceName = null;
+
+	private $properties = array();
+	private $methods = array();
+
+	public function setNamespace($namespace) {
+		$this->namespace = $namespace;
+	}
+
+	public function setClassName($className) {
+		$this->className = $className;
+	}
+
+	public function setClassDescription($classDescription) {
+		$this->classDescription = $classDescription;
+	}
+
+	public function setExtendsClassName($extendsClassName) {
+		$this->extendsClassName = $extendsClassName;
+	}
+
+	public function setImplementsInterfaceName($implementsInterfaceName) {
+		$this->implementsInterfaceName = $implementsInterfaceName;
+	}
+
+	public function addProperty($propertyName, $accessModifier = 'public', $isStatic = false, $returnType = '', $value = null) {
+		$this->properties[] = array(
+			'accessModifier'	=> $accessModifier,
+			'isStatic'			=> $isStatic,
+			'returnType'		=> $returnType,
+			'name'				=> $propertyName,
+			'value'				=> $value,
+			'description'		=> ''
+		);
+
+		return sizeof($this->properties) - 1;
+	}
+
+	public function setPropertyDescription($propertyIndex, $description) {
+		$this->properties[$propertyIndex]['description'] = $description;
+	}
+
+	public function addMethod($methodName, $accessModifier = 'public', $isStatic = false, $returnType = '') {
+		$this->methods[] = array(
+			'accessModifier'	=> $accessModifier,
+			'isStatic'			=> $isStatic,
+			'returnType'		=> $returnType,
+			'name'				=> $methodName,
+			'arguments'			=> array(),
+			'throws'			=> '',
+			'description'		=> '',
+			'code'				=> ''
+		);
+
+		return sizeof($this->methods) - 1;
+	}
+
+	public function setMethodThrows($methodIndex, $throws) {
+		$this->methods[$methodIndex]['throws'] = $throws;
+	}
+
+	public function setMethodDescription($methodIndex, $description) {
+		$this->methods[$methodIndex]['description'] = $description;
+	}
+
+	public function setMethodCode($methodIndex, $code) {
+		$this->methods[$methodIndex]['code'] = $code;
+	}
+
+	public function setMethodArguments($methodIndex, $arguments = array()) {
+		$this->methods[$methodIndex]['arguments'] = $arguments;
+	}
+
+	public function saveAs($fileName) {
+
+		$contents = array();
+
+		$contents[] = '<?php';
+
+		if ($this->namespace != '') {
+			$contents[] = '';
+			$contents[] = 'namespace '.$this->namespace.';';
+		}
+
+		if ($this->classDescription != '') {
+			$contents[] = '';
+			$contents[] = '/**';
+			$contents[] = ' * <pre>';
+			$contents[] = ' * '.$this->classDescription;
+			$contents[] = ' * </pre>';
+			$contents[] = ' */';
+		}
+
+		$classHeads = array('class',$this->className);
+		if ($this->extendsClassName != '') {
+			$classHeads[] = 'extends';
+			$classHeads[] = $this->extendsClassName;
+		}
+		if ($this->implementsInterfaceName != '') {
+			$classHeads[] = 'implements';
+			$classHeads[] = $this->implementsInterfaceName;
+		}
+
+		$contents[] = implode(' ', $classHeads).' {';
+
+		foreach ($this->properties as $property) {
+
+			$propertyHeads = array($property['accessModifier']);
+
+			if ($property['isStatic']) {
+				$propertyHeads[] = 'static';
+			}
+
+			$propertyHeads[] = '$'.$property['name'];
+
+			if ($property['value'] != null) {
+				$propertyHeads[] = '=';
+
+				if (is_string($property['value'])) {
+					$propertyHeads[] = '"'.$property['value'].'"';
+				} elseif (is_bool($property['value'])) {
+					$propertyHeads[] = $property['value'] ? 'true' : 'false';
+				} else {
+					$propertyHeads[] = $property['value'];
+				}
+			}
+
+			$contents[] = '';
+			$contents[] = "\t".implode(' ', $propertyHeads).";".($property['description'] == '' ? '' : ' // '.$property['description'] );
+		}
+
+		foreach ($this->methods as $method) {
+
+			$methodHeads = array($method['accessModifier']);
+
+			if ($method['isStatic']) {
+				$methodHeads[] = 'static';
+			}
+
+			$methodHeads[] = 'function';
+			$methodHeads[] = $method['name'].'('.implode(', ', $method['arguments']).')';
+			$methodHeads[] = '{';
+
+			$contents[] = '';
+
+			if ($method['description'] != '') {
+				$contents[] = "\t".'/**';
+				$contents[] = "\t".' * <pre>';
+				$contents[] = "\t".' * '.$method['description'];
+				$contents[] = "\t".' * </pre>';
+				$contents[] = "\t".' * ';
+
+				if (sizeof($method['arguments']) > 0) {
+					foreach ($method['arguments'] as $argument) {
+						$contents[] = "\t".' * @param '.$argument;
+					}
+				}
+
+				if ($method['returnType'] != '') {
+					$contents[] = "\t".' * @return '.$method['returnType'];
+				}
+
+				$contents[] = "\t".' */';
+			}
+
+			$contents[] = "\t".implode(' ', $methodHeads);
+			$contents[] = StringHelper::appendTabByLine($method['code'], 2);
+			$contents[] = "\t".'}';
+		}
+
+		$contents[] = '}';
+
+		file_put_contents($fileName, implode(PHP_EOL, $contents));
+	}
+
+}
+
