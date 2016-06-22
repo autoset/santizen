@@ -15,6 +15,7 @@ $ santizen action arguments
 $ santizen config output.dir=../target
 $ santizen config db.type="mysql" db.host="localhost" db.username="root" db.password="autoset" db.name="sansting"
 $ santizen config lang="php5" framework="santorini"
+$ santizen config php.namespace="com.sansting.openapi"
 ```
 
 - fetch

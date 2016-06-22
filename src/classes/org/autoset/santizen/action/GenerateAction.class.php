@@ -17,6 +17,8 @@ class GenerateAction implements Action {
 
 		if (empty($namespace)) {
 			$namespace = 'example';
+		} else {
+			$namespace = str_replace('.', "\\", $namespace);
 		}
 
 		$generator = $this->getGenerator();
