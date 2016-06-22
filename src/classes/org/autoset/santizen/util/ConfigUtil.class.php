@@ -27,7 +27,7 @@ class ConfigUtil {
 	}
 
 	public static function getTableName($tableName) {
-		return strtoupper($tableName);
+		return strtolower($tableName);
 	}
 
 	public static function setVar($varName, $varValue) {
