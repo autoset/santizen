@@ -107,8 +107,29 @@ class SantoriniGenerator {
 		$phpFile->setMethodDescription($methodIdx, $this->tableName.' 테이블 목록 조회');
 		$phpFile->setMethodArguments($methodIdx, array($voClassName." \$paramVo"));
 
+		$code = $this->getGeneratedSelectQuery($voClassName, $tableAlias, $this->tableName.' 테이블 목록 조회', true );
+		$phpFile->setMethodCode($methodIdx, $code);
+
+
+		// 단 건 조회용
+		$methodName = StringHelper::underscore2camel($this->tableName);
+		$methodIdx = $phpFile->addMethod('select'.ucfirst($methodName), 'public', false, $voClassName);
+		$phpFile->setMethodDescription($methodIdx, $this->tableName.' 테이블 단 건 조회');
+		$phpFile->setMethodArguments($methodIdx, array($voClassName." \$paramVo"));
+
+		$code = $this->getGeneratedSelectQuery($voClassName, $tableAlias, $this->tableName.' 테이블 단 건 조회', false );
+		$phpFile->setMethodCode($methodIdx, $code);
+
+
+
+		$classFilePath = $this->getOutputDir('dao/'.$className.'.class.php');
+		$phpFile->saveAs($classFilePath);
+	}
+
+	private function getGeneratedSelectQuery($voClassName, $tableAlias, $queryTitle, $isList = false ) {
+
 		$codes = array(	'$sql =<<<SQL',
-						"\t".'SELECT /* '.$this->tableName.' 테이블 목록 조회'.' */');
+						"\t".'SELECT /* '.$queryTitle.' */');
 
 		$hasDeleteYnColumn = false;
 		$pkColumns = array();
@@ -117,7 +138,7 @@ class SantoriniGenerator {
 			$columns[] = $tableAlias.'.'.$scheme['name'];
 
 			if ($scheme['isPk']) {
-				$pkColumns[] = $tableAlias.'.'.$scheme['name'].' DESC';
+				$pkColumns[] = $scheme['name'];
 			}
 
 			if ($scheme['name'] == 'delete_yn') {
@@ -126,25 +147,50 @@ class SantoriniGenerator {
 		}
 
 		$codes[] = "\t\t".implode(PHP_EOL . "\t\t".', ' , $columns);
-
 		$codes[] = "\t".'FROM '.$this->tableName.' AS '.$tableAlias;
+
+		$exposuredWhere = false;
 
 		if ($hasDeleteYnColumn) {
 			$codes[] = "\t".'WHERE '.$tableAlias.'.delete_yn = \'N\'';
+			$exposuredWhere = true;
 		}
 
-		$codes[] = "\t".'ORDER BY '.implode(', ', $pkColumns);
+		if ($isList) {
+			$orders = array();
+			foreach ($pkColumns as $pkCol) {
+				$orders[] = $tableAlias.'.'.$pkCol.' DESC';
+			}
+			$codes[] = "\t".'ORDER BY '.implode(', ', $orders);
+
+			$codes[] = "\t".'LIMIT #startIdx#, #pageView#';
+		} else {
+
+			$wheres = array();
+
+			foreach ($pkColumns as $pkCol) {
+				$wheres[] = $tableAlias.'.'.$pkCol.' = #'.StringHelper::underscore2camel($pkCol).'#';
+			}
+
+			if ($exposuredWhere) {
+				$codes[] = "\t".'AND '.implode(' AND ', $wheres);
+			} else {
+				$codes[] = "\t".'WHERE '.implode(' AND ', $wheres);
+			}
+
+			$codes[] = "\t".'LIMIT 0, 1';
+		}
 
 		$codes[] = "\1".'SQL;';
 		$codes[] = '';
-		$codes[] = 'return $this->selectList($sql, $paramVo, new '.$voClassName.'());';
 
+		if ($isList) {
+			$codes[] = 'return $this->selectList($sql, $paramVo, new '.$voClassName.'());';
+		} else {
+			$codes[] = 'return $this->selectByPk($sql, $paramVo, new '.$voClassName.'());';
+		}
 
-		$phpFile->setMethodCode($methodIdx, implode(PHP_EOL, $codes));
-
-
-		$classFilePath = $this->getOutputDir('dao/'.$className.'.class.php');
-		$phpFile->saveAs($classFilePath);
+		return implode(PHP_EOL, $codes);
 	}
 
 	private function getOutputDir($dir) {
