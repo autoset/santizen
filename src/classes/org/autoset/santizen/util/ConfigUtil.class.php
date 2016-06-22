@@ -18,28 +18,58 @@ class ConfigUtil {
 		}
 	}
 
-	public static function saveConfigFile($configVars) {
-		file_put_contents(self::$CONFIG_FILE, serialize($configVars));
+	public static function saveConfigFile($configData) {
+		file_put_contents(self::$CONFIG_FILE, serialize($configData));
 	}
 
 	public static function getVarName($varName) {
 		return strtoupper($varName);
 	}
 
+	public static function getTableName($tableName) {
+		return strtoupper($tableName);
+	}
+
 	public static function setVar($varName, $varValue) {
-		$configVars = self::readConfigFile();
-		$configVars[self::getVarName($varName)] = $varValue;
-		self::saveConfigFile($configVars);
+		$configData = self::readConfigFile();
+		$configData['variables'][self::getVarName($varName)] = $varValue;
+		self::saveConfigFile($configData);
 	}
 
 	public static function getVar($varName) {
 		$varName = self::getVarName($varName);
-		$configVars = self::readConfigFile();
+		$configData = self::readConfigFile();
+		$configVars = array_key_exists('variables', $configData) ? $configData['variables'] : array();
 		return array_key_exists($varName, $configVars) ? $configVars[$varName] : null;
 	}
 
 	public static function getVarNames() {
-		return array_keys(self::readConfigFile());
+		$configData = self::readConfigFile();
+		if (array_key_exists('variables', $configData))
+			return array_keys($configData['variables']);
+		else
+			return array();
+	}
+
+	public static function setDatabaseScheme($tableName, $scheme) {
+		$configData = self::readConfigFile();
+		$configData['databaseScheme'][self::getTableName($tableName)] = $scheme;
+		self::saveConfigFile($configData);
+	}
+
+	public static function getDatabaseScheme($tableName) {
+		$tableName = self::getTableName($tableName);
+		$configData = self::readConfigFile();
+		$configVars = array_key_exists('databaseScheme', $configData) ? $configData['databaseScheme'] : array();
+		return array_key_exists($tableName, $configVars) ? $configVars[$tableName] : null;
+	}
+
+	public static function getDatabaseSchemes() {
+		$configData = self::readConfigFile();
+		if (array_key_exists('databaseScheme', $configData))
+			return array_keys($configData['databaseScheme']);
+		else
+			return array();
 	}
 
 	public static function cleanUp() {

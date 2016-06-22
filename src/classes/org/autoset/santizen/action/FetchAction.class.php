@@ -18,13 +18,10 @@ class FetchAction implements Action {
 	public function run() {
 
 		$this->initDatabase();
-		
-		foreach ($this->tables as $tableName) {
-			echo ">".$tableName.PHP_EOL;
-			var_dump($this->dbConn->getFields($tableName));
-		}
 
+		$this->prepareSchemeData();
 
+		echo "santizen ".sizeof($this->tables)." tables fetched.".PHP_EOL;
 	}
 
 	private function initDatabase() {
@@ -41,5 +38,11 @@ class FetchAction implements Action {
 		$this->dbConn = DatabaseFactory::getInstance($dbType);
 		$this->dbConn->connect($dbUrl, $dbUsername, $dbPassword);
 
+	}
+
+	private function prepareSchemeData() {
+		foreach ($this->tables as $tableName) {
+			ConfigUtil::setDatabaseScheme($tableName, $this->dbConn->getFields($tableName) );
+		}
 	}
 }

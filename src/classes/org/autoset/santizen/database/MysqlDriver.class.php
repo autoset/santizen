@@ -335,7 +335,7 @@ class MysqlDriver
 
 	public function getFields($tableName)
 	{
-		$result = $this->_execute('SELECT * FROM `'.$tableName.'`');
+		$result = $this->_execute('SELECT * FROM `'.$tableName.'` LIMIT 1');
 		$fields = $result->fetch_fields();
 		$result = array();
 		foreach ($fields as $field) {
