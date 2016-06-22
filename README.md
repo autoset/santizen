@@ -28,7 +28,7 @@ santizen fetch board_topic board_comment
 ```
 santizen variables:
   - DB.HOST: localhost
-  - DB.NAME: vocanara
+  - DB.NAME: sansting
   - DB.USERNAME: root
   - DB.PASSWORD: autoset
   - DB.TYPE: mysql
