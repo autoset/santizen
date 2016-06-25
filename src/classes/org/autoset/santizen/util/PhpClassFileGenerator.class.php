@@ -151,7 +151,16 @@ class PhpClassFileGenerator {
 			}
 
 			$contents[] = '';
-			$contents[] = "\t".implode(' ', $propertyHeads).";".($property['description'] == '' ? '' : ' // '.$property['description'] );
+
+			if ($property['description'] != '') {
+				$contents[] = '';
+				$contents[] = "\t".'/**';
+				$contents[] = "\t".' * <pre>';
+				$contents[] = "\t".' * '.$property['description'];
+				$contents[] = "\t".' * </pre>';
+				$contents[] = "\t".' */';
+			}
+			$contents[] = "\t".implode(' ', $propertyHeads).";";
 		}
 
 		foreach ($this->methods as $method) {

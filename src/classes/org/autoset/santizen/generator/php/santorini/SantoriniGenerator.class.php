@@ -20,8 +20,8 @@ class SantoriniGenerator {
 		new VoClassGenerator($package);
 
 		new DaoClassGenerator($package);
-
 		
+		new ServiceClassGenerator($package);
 	}
 
 }

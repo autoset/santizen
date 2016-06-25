@@ -45,6 +45,8 @@ class DaoClassGenerator {
 
 		$this->addSelectListMethod();
 
+		$this->addSelectCountMethod();
+
 		$this->addSelectMethod();
 
 		$this->addInsertMethod(true); // only insert
@@ -83,6 +85,74 @@ class DaoClassGenerator {
 
 		$code = $this->getGeneratedSelectQuery('목록 조회', true );
 		$this->phpFile->setMethodCode($methodIdx, $code);
+	}
+
+	private function addSelectCountMethod() {
+
+		$hasDeleteYnColumn = false;
+		$pkColumns = array();
+		foreach ($this->schemes as $scheme) {
+			if ($scheme['isPk']) {
+				$pkColumns[] = $scheme['name'];
+			}
+
+			if ($scheme['name'] == $this->DELETE_YN_COLUMN) {
+				$hasDeleteYnColumn = true;
+			}
+		}
+
+		// 총 건 수 조회
+		$methodName = 'selectCount'.$this->tableNameToCamel;
+		
+		$methodIdx = $this->phpFile->addMethod($methodName, 'public', false, $this->voClassName);
+
+		$this->phpFile->setMethodDescription($methodIdx, $this->tableName.' 테이블 총 건 수 조회');
+		$this->phpFile->setMethodArguments($methodIdx, array($this->voClassName." \$paramVo"));
+		
+		$codes = array(	'$sql =<<<SQL',
+						"\t".'SELECT /* 총 건 수 조회 */');
+		$codes[] = "\t\tCOUNT(".array_shift($pkColumns).") AS total_count";
+		$codes[] = "\t".'FROM '.$this->tableName.' AS '.$this->tableAlias;
+
+		$exposuredWhere = false;
+
+		if ($hasDeleteYnColumn) {
+			$codes[] = "\t".'WHERE '.$this->tableAlias.'.'.$this->DELETE_YN_COLUMN.' = \'N\'';
+			$exposuredWhere = true;
+		}
+
+		if (!$exposuredWhere) {
+			$codes[] = "\t".'WHERE 1 = 1';
+		}
+			
+		$codes[] = "\1".'SQL;';
+		$codes[] = '';
+
+		foreach ($this->schemes as $scheme) {
+
+			if ($scheme['name'] == $this->REGISTER_UID_COLUMN ||
+				$scheme['name'] == $this->REGISTER_DT_COLUMN ||
+				$scheme['name'] == $this->MODIFY_UID_COLUMN ||
+				$scheme['name'] == $this->MODIFY_DT_COLUMN ||
+				$scheme['name'] == $this->DELETE_UID_COLUMN ||
+				$scheme['name'] == $this->DELETE_DT_COLUMN ||
+				$scheme['name'] == $this->DELETE_YN_COLUMN) {
+				continue;
+			}
+
+			$bindingName = StringHelper::underscore2camel($scheme['name']);
+
+			$codes[] = 'if (trim($paramVo->get'.ucfirst($bindingName).'()) != \'\') {';
+			$codes[] = "\t".'$sql .= " AND '.$this->tableAlias.'.'.$scheme['name'].' = #'.$bindingName.'#";';
+			$codes[] = '}';
+			$codes[] = '';
+
+		}
+
+		$codes[] = 'return (int)$this->selectByPk($sql, $paramVo, \'int\');';
+
+		$this->phpFile->setMethodCode($methodIdx, implode(PHP_EOL, $codes));
+
 	}
 
 	private function addSelectMethod() {

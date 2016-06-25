@@ -36,4 +36,8 @@ class PreparePackageStructure {
 		return new PackageStructure($this->config, 'dao', 'Dao');
 	}
 
+	public function getServiceClass() {
+		return new PackageStructure($this->config, 'service', 'Service');
+	}
+
 }
