@@ -119,6 +119,9 @@ class DaoClassGenerator {
 		$codes = array(	'$sql =<<<SQL',
 						"\t".'INSERT INTO '.$this->tableName.' /* '.$queryTitle.' */');
 
+
+		// FIXME: PK에 auto_increment가 설정된 경우에는 PK를 제외하고 쿼리 생성하도록 해야 함.
+
 		$codes[] = "\t(";
 		foreach ($this->schemes as $idx => $scheme) {
 			if ($idx == 0)
@@ -190,6 +193,8 @@ class DaoClassGenerator {
 		$codes[] = "\1".'SQL;';
 		$codes[] = '';
 		$codes[] = '$this->insert($sql, $paramVo);';
+
+		// FIXME: PK에 auto_increment가 설정된 경우에만 생성해야함.
 		$codes[] = '';
 		$codes[] = 'return $this->getSequenceNo();';
 
