@@ -47,9 +47,11 @@ class DaoClassGenerator {
 
 		$this->addSelectMethod();
 
-		$this->addInsertMethod();
+		$this->addInsertMethod(true); // only insert
 
 		$this->addUpdateMethod();
+
+		$this->addInsertMethod(false); // upsert statement
 
 		$bHasDeleteYnColumn = false;
 
@@ -98,18 +100,24 @@ class DaoClassGenerator {
 
 	}
 
-	private function addInsertMethod() {
+	private function addInsertMethod($bOnlyInsert = true) {
 
 		// 단 건 입력용
-		$methodName = 'insert'.$this->tableNameToCamel;
+		if ($bOnlyInsert) {
+			$queryTitle = "단 건 입력";
+			$methodName = 'insert'.$this->tableNameToCamel;
+		} else {
+			$queryTitle = "단 건 입력/수정";
+			$methodName = 'upsert'.$this->tableNameToCamel;
+		}
 		
 		$methodIdx = $this->phpFile->addMethod($methodName, 'public', false, $this->voClassName);
 
-		$this->phpFile->setMethodDescription($methodIdx, $this->tableName.' 테이블 단 건 입력');
+		$this->phpFile->setMethodDescription($methodIdx, $this->tableName.' 테이블 '.$queryTitle);
 		$this->phpFile->setMethodArguments($methodIdx, array($this->voClassName." \$paramVo"));
 		
 		$codes = array(	'$sql =<<<SQL',
-						"\t".'INSERT INTO '.$this->tableName.' /* 단 건 입력 */');
+						"\t".'INSERT INTO '.$this->tableName.' /* '.$queryTitle.' */');
 
 		$codes[] = "\t(";
 		foreach ($this->schemes as $idx => $scheme) {
@@ -146,6 +154,38 @@ class DaoClassGenerator {
 				$codes[] = "\t\t, ".$bindingName;
 		}
 		$codes[] = "\t)";
+
+		if (!$bOnlyInsert) {
+			$codes[] = "\tON DUPLICATE KEY UPDATE";
+
+			$bStart = false;
+
+			foreach ($this->schemes as $idx => $scheme) {
+
+				$bindingName = StringHelper::underscore2camel($scheme['name']);
+
+				if ($scheme['name'] == $this->REGISTER_DT_COLUMN ||
+					$scheme['name'] == $this->REGISTER_UID_COLUMN ||
+					$scheme['name'] == $this->DELETE_UID_COLUMN ||
+					$scheme['name'] == $this->DELETE_DT_COLUMN ||
+					$scheme['name'] == $this->DELETE_YN_COLUMN) {
+					continue;
+				} elseif ($scheme['name'] == $this->MODIFY_DT_COLUMN) {
+					$bindingName = 'NOW()';
+				} elseif ($scheme['name'] == $this->MODIFY_UID_COLUMN) {
+					$bindingName = '#'.StringHelper::underscore2camel($this->REGISTER_UID_COLUMN).'#';
+				} else {
+					$bindingName = "#".$bindingName."#";
+				}
+
+				if (!$bStart) {
+					$codes[] = "\t\t".$scheme['name']." = ".$bindingName;
+					$bStart = true;
+				} else {
+					$codes[] = "\t\t, ".$scheme['name']." = ".$bindingName;
+				}
+			}
+		}
 
 		$codes[] = "\1".'SQL;';
 		$codes[] = '';
