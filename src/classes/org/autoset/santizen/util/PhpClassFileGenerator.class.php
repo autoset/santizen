@@ -12,7 +12,7 @@ class PhpClassFileGenerator {
 	private $className = null;
 	private $classDescription = null;
 	private $extendsClassName = null;
-	private $implementsInterfaceName = null;
+	private $implementsInterfaceName = array();
 
 	private $properties = array();
 	private $methods = array();
@@ -33,8 +33,8 @@ class PhpClassFileGenerator {
 		$this->extendsClassName = $extendsClassName;
 	}
 
-	public function setImplementsInterfaceName($implementsInterfaceName) {
-		$this->implementsInterfaceName = $implementsInterfaceName;
+	public function addImplementsInterfaceName($implementsInterfaceName) {
+		$this->implementsInterfaceName[] = $implementsInterfaceName;
 	}
 
 	public function addUseClass($classPath) {
@@ -121,9 +121,9 @@ class PhpClassFileGenerator {
 			$classHeads[] = 'extends';
 			$classHeads[] = $this->extendsClassName;
 		}
-		if ($this->implementsInterfaceName != '') {
+		if (sizeof($this->implementsInterfaceName) > 0) {
 			$classHeads[] = 'implements';
-			$classHeads[] = $this->implementsInterfaceName;
+			$classHeads[] = implode(', ', $this->implementsInterfaceName);
 		}
 
 		$contents[] = implode(' ', $classHeads).' {';
