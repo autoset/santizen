@@ -347,6 +347,38 @@ class DaoClassGenerator {
 		}
 
 		if ($isList) {
+
+			if (!$exposuredWhere) {
+				$codes[] = "\t".'WHERE 1 = 1';
+			}
+			
+			$codes[] = "\1".'SQL;';
+			$codes[] = '';
+
+			foreach ($this->schemes as $scheme) {
+
+				if ($scheme['name'] == $this->REGISTER_UID_COLUMN ||
+					$scheme['name'] == $this->REGISTER_DT_COLUMN ||
+					$scheme['name'] == $this->MODIFY_UID_COLUMN ||
+					$scheme['name'] == $this->MODIFY_DT_COLUMN ||
+					$scheme['name'] == $this->DELETE_UID_COLUMN ||
+					$scheme['name'] == $this->DELETE_DT_COLUMN ||
+					$scheme['name'] == $this->DELETE_YN_COLUMN) {
+					continue;
+				}
+
+				$bindingName = StringHelper::underscore2camel($scheme['name']);
+
+				$codes[] = 'if (trim($paramVo->get'.ucfirst($bindingName).'()) != \'\') {';
+				$codes[] = "\t".'$sql .= " AND '.$this->tableAlias.'.'.$scheme['name'].' = #'.$bindingName.'#";';
+				$codes[] = '}';
+				$codes[] = '';
+
+			}
+
+			$codes[] = '';
+			$codes[] = '$sql =<<<SQL';
+
 			$orders = array();
 			foreach ($pkColumns as $pkCol) {
 				$orders[] = $this->tableAlias.'.'.$pkCol.' DESC';
