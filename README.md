@@ -39,7 +39,7 @@ santizen variables:
   - FRAMEWORK: santorini
   - DB.TYPE: mysql
   - PHP.NAMESPACE: com.sansting.openapi
-  - SANTORINI.PREFIX_URL: /openapi/v1
+  - SANTORINI.PREFIX_URL: sansting/v1
 
 database schemes:
   - board_topic
