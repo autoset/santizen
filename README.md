@@ -42,9 +42,8 @@ santizen variables:
   - SANTORINI.PREFIX_URL: /openapi/v1
 
 database schemes:
-  - user
-  - voca
-  - voca_set
+  - board_topic
+  - board_comment
 ```
 
 - generate
