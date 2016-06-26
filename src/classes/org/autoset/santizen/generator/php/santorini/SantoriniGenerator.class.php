@@ -22,6 +22,8 @@ class SantoriniGenerator {
 		new DaoClassGenerator($package);
 		
 		new ServiceClassGenerator($package);
+
+		new RestControllerClassGenerator($package);
 	}
 
 }
