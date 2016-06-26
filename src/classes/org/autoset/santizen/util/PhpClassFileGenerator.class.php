@@ -37,7 +37,7 @@ class PhpClassFileGenerator {
 		$this->implementsInterfaceName[] = $implementsInterfaceName;
 	}
 
-	public function addUseClass($classPath) {
+	public function addUseClass($classPath = "") {
 		$this->useClasses[] = $classPath;
 	}
 
@@ -103,7 +103,10 @@ class PhpClassFileGenerator {
 		if (sizeof($this->useClasses) > 0) {
 			$contents[] = '';
 			foreach ($this->useClasses as $classPath) {
-				$contents[] = 'use '.$classPath.';';
+				if ($classPath == "")
+					$contents[] = '';
+				else
+					$contents[] = 'use '.$classPath.';';
 			}
 		}
 

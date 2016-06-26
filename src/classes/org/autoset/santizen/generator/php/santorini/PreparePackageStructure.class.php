@@ -40,4 +40,8 @@ class PreparePackageStructure {
 		return new PackageStructure($this->config, 'service', 'Service');
 	}
 
+	public function getRestControllerClass() {
+		return new PackageStructure($this->config, 'controller', 'RestController');
+	}
+
 }
