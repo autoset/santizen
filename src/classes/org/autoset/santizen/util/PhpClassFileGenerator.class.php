@@ -67,6 +67,7 @@ class PhpClassFileGenerator {
 			'arguments'			=> array(),
 			'throws'			=> '',
 			'description'		=> '',
+			'remarks'			=> '',
 			'code'				=> ''
 		);
 
@@ -79,6 +80,10 @@ class PhpClassFileGenerator {
 
 	public function setMethodDescription($methodIndex, $description) {
 		$this->methods[$methodIndex]['description'] = $description;
+	}
+
+	public function setMethodRemarks($methodIndex, $remarks) {
+		$this->methods[$methodIndex]['remarks'] = $remarks;
 	}
 
 	public function setMethodCode($methodIndex, $code) {
@@ -156,11 +161,21 @@ class PhpClassFileGenerator {
 			$contents[] = '';
 
 			if ($property['description'] != '') {
+				$bMultiLine = (strpos($property['description'], "\n"));
+
 				$contents[] = '';
 				$contents[] = "\t".'/**';
-				$contents[] = "\t".' * <pre>';
-				$contents[] = "\t".' * '.$property['description'];
-				$contents[] = "\t".' * </pre>';
+
+				if ($bMultiLine) {
+					$descs = explode("\n", $property['description']);
+					$contents[] = "\t".' * <pre>';
+					foreach ($descs as $desc) {
+						$contents[] = "\t".' * '.$desc;
+					}
+					$contents[] = "\t".' * </pre>';
+				} else {
+					$contents[] = "\t".' * '.$property['description'];
+				}
 				$contents[] = "\t".' */';
 			}
 			$contents[] = "\t".implode(' ', $propertyHeads).";";
@@ -181,11 +196,22 @@ class PhpClassFileGenerator {
 			$contents[] = '';
 
 			if ($method['description'] != '') {
+
+				$bMultiLine = (strpos($method['description'], "\n"));
+
+				$contents[] = '';
 				$contents[] = "\t".'/**';
-				$contents[] = "\t".' * <pre>';
-				$contents[] = "\t".' * '.$method['description'];
-				$contents[] = "\t".' * </pre>';
-				$contents[] = "\t".' * ';
+
+				if ($bMultiLine) {
+					$descs = explode("\n", $method['description']);
+					$contents[] = "\t".' * <pre>';
+					foreach ($descs as $desc) {
+						$contents[] = "\t".' * '.$desc;
+					}
+					$contents[] = "\t".' * </pre>';
+				} else {
+					$contents[] = "\t".' * '.$method['description'];
+				}
 
 				if (sizeof($method['arguments']) > 0) {
 					foreach ($method['arguments'] as $argument) {
@@ -199,6 +225,13 @@ class PhpClassFileGenerator {
 
 				if ($method['returnType'] != '') {
 					$contents[] = "\t".' * @return '.$method['returnType'];
+				}
+
+				if ($method['remarks'] != "") {
+					$arr = explode("\n", $method['remarks']);
+					foreach ($arr as $str) {
+						$contents[] = "\t".' * '.$str;
+					}
 				}
 
 				$contents[] = "\t".' */';

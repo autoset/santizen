@@ -20,6 +20,10 @@ class PreparePackageStructure {
 		}
 	}
 
+	public function getConfig() {
+		return $this->config;
+	}
+
 	public function getTableName() {
 		return $this->config->getTableName();
 	}

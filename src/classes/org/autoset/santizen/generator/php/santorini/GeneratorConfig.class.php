@@ -9,7 +9,8 @@ class GeneratorConfig {
 	private $outputDir = null;
 	private $setNamespace = null;
 	private $tableName = null;
-	private $setSchemes = null;
+	private $schemes = null;
+	private $prefixUrl = null;
 
 	public function setOutputDir($dir) {
 		$this->outputDir = $dir;
@@ -25,6 +26,10 @@ class GeneratorConfig {
 
 	public function setSchemes($schemes) {
 		$this->schemes = $schemes;
+	}
+
+	public function setPrefixUrl($prefixUrl) {
+		$this->prefixUrl = $prefixUrl;
 	}
 
 	public function getOutputDir($suffix = '') {
@@ -55,5 +60,9 @@ class GeneratorConfig {
 
 	public function getSchemes() {
 		return $this->schemes;
+	}
+
+	public function getPrefixUrl() {
+		return $this->prefixUrl;
 	}
 }
