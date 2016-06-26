@@ -44,19 +44,31 @@ class RestControllerClassGenerator {
 		$this->phpFile->addUseClass($voClass->getClassFullNamespace());
 
 		$this->addProperty("sysPropService", "SysPropService");
+
+		$this->serviceInstanceName = lcfirst($serviceClass->getClassName());
 		
-		$this->addProperty(lcfirst($serviceClass->getClassName()), $serviceClass->getClassName());
+		$this->addProperty($this->serviceInstanceName, $serviceClass->getClassName());
 
 		$this->addInitMethod($serviceClass);
 
 		$tableNameToUrl = str_replace('_','-',strtolower($this->tableName));
 
+		// 목록
 		$this->addMethod(	"get".$this->tableNameToCamel."s"
-							, "retrieveList"
+							, "retrieveList".$this->tableNameToCamel
 							, $packageStructure->getConfig()->getPrefixUrl()."/".$tableNameToUrl."s"
 							, "GET"
 							, "목록 조회"
 							, true);
+
+		// 단 건 조회
+		$this->addMethod(	"get".$this->tableNameToCamel."s"
+							, "retrieve".$this->tableNameToCamel
+							, $packageStructure->getConfig()->getPrefixUrl()."/".$tableNameToUrl."s/([0-9]+)"
+							, "GET"
+							, "단 건 조회"
+							, true);
+
 
 		$this->phpFile->saveAs($restControllerClass->getPath());
 		
@@ -81,17 +93,40 @@ class RestControllerClassGenerator {
 		$this->phpFile->setMethodCode($methodIdx, implode(PHP_EOL, $codes));
 	}
 
-	private function addMethod($methodPrefix, $serviceMethodPrefix, $url, $httpdMethod, $title, $returnSyntax) {
+	private function addMethod($methodPrefix, $serviceMethod, $url, $httpdMethod, $title, $returnSyntax) {
 
 		$methodName = $methodPrefix;
 		$methodIdx = $this->phpFile->addMethod($methodName, 'public', false, 'ModelAndView');
 		
-		$this->phpFile->setMethodDescription($methodIdx, $this->tableName.' 테이블 '.$title);
+		$this->phpFile->setMethodDescription($methodIdx, $title);
 		$this->phpFile->setMethodRemarks($methodIdx, "@PagePolicy(requiredLogin=false)\n@RequestMapping(value='".$url."',method='".$httpdMethod."')");
 
 		$this->phpFile->setMethodArguments($methodIdx, array('HttpServletRequest $request', 'HttpServletResponse $response'));
 
 		$codes = array();
+
+		// FIXME: 요청 파라미터 VO로 매핑되어야 함.
+		$codes[] = '// 요청 파라미터 VO 생성';
+		$codes[] = '$parameterVO = \org\autoset\santorini\util\JsonHelperUtil::String2VO($req->getInputStream());';
+		$codes[] = '';
+		$codes[] = '// 응답 모델 생성';
+		$codes[] = '$model = new ModelMap();';
+		$codes[] = '';
+		$codes[] = '$model->addAttribute(\'code\', 0);';
+		$codes[] = '$model->addAttribute(\'message\', \'success\');';
+		$codes[] = '$model->addAttribute(\'data\', \'\');';
+		$codes[] = '';
+		$codes[] = '$resultVo = $this->'.$this->serviceInstanceName.'->'.$serviceMethod.'($parameterVO);';
+		$codes[] = '';
+		$codes[] = 'if ($resultVo == null)';
+		$codes[] = '{';
+		$codes[] = '	$model->addAttribute(\'code\', 1);';
+		$codes[] = '	$model->addAttribute(\'message\', \'조회된 데이터가 없습니다.\');';
+		$codes[] = '	return new ModelAndView(\'JSONView\', $model);';
+		$codes[] = '}';
+		$codes[] = '';
+		$codes[] = '$model->addAttribute(\'data\', $resultVo);';
+		$codes[] = 'return new ModelAndView(\'JSONView\', $model);';
 
 
 		$this->phpFile->setMethodCode($methodIdx, implode(PHP_EOL, $codes));
